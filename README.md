@@ -2,7 +2,7 @@
 
 A searchable gallery of 550 ChatGPT image prompts, each paired with a real example image.
 
-Live: https://image.sifuyik.com
+Live: https://image.sifuyik.com (after DNS + Pages enable) — interim: https://yncacademy.github.io/chatgptimage/
 
 ## Structure
 
