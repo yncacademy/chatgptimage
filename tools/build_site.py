@@ -4,17 +4,21 @@ import json, os, re, shutil, sys, html
 
 ROOT = "/Users/apple/.openclaw-autoclaw/workspace/550-image-prompts-site"
 SRC_IMG = "/Users/apple/.openclaw-autoclaw/workspace/550 Image Prompt/550 chatgpt image prompts "
-DIST = os.path.join(ROOT, "dist")
+DIST = ROOT  # site deploys from repo root (GitHub Pages, branch deployment)
+
+def _fresh_dir(path):
+    """Remove dir (any depth of accidental nesting) and recreate empty."""
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+    os.makedirs(path)
+    return path
 
 data = json.load(open(os.path.join(ROOT, "data/prompts.json"), encoding="utf-8"))
 items, sections, tail = data["items"], data["sections"], data["tail"]
 howto = data["intro_howto"]
 
 # ── 1. images ────────────────────────────────────────────────────────────────
-img_dist = os.path.join(DIST, "images")
-if os.path.exists(img_dist):
-    shutil.rmtree(img_dist)
-os.makedirs(img_dist)
+img_dist = _fresh_dir(os.path.join(DIST, "images"))
 copied = 0
 for f in os.listdir(SRC_IMG):
     m = re.match(r"^(\d+)\. .+\.webp$", f)
@@ -26,13 +30,15 @@ print(f"images copied: {copied}")
 if copied != 550:
     print("FATAL: expected 550 images", file=sys.stderr); sys.exit(1)
 
-# ── 1.5 static assets ──────────────────────────────────────────────────────
-assets_dst = os.path.join(DIST, "assets")
-if os.path.exists(assets_dst):
-    shutil.rmtree(assets_dst)
-shutil.copytree(os.path.join(ROOT, "assets"), assets_dst,
-                ignore=shutil.ignore_patterns(".DS_Store"))
-print("assets copied")
+# ── 1.5 static assets ──────────────────────────────────────────────
+# When DIST == ROOT the working assets/ dir IS the deliverable - nothing to copy.
+if os.path.abspath(DIST) != os.path.abspath(ROOT):
+    assets_dst = _fresh_dir(os.path.join(DIST, "assets"))
+    shutil.copytree(os.path.join(ROOT, "assets"), assets_dst,
+                    ignore=shutil.ignore_patterns(".DS_Store"))
+    print("assets copied")
+else:
+    print("assets already in place (repo-root build)")
 
 # ── 2. prompts.js (window.PROMPTS_DATA) ─────────────────────────────────
 with open(os.path.join(DIST, "data.js"), "w", encoding="utf-8") as f:
